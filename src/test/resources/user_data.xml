@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+	<user_entity
+		user_id="100"
+		username="TestA"
+		password="AAAAAAA"
+	/>
+	
+	<user_entity
+		user_id="150"
+		username="Test 10"
+		password="BBBBBBB"
+	/>
+	<user_entity
+		user_id="200"
+		username="TestPerson"
+		password="CCCCCCC"
+	/>
+	<user_entity
+		user_id="250"
+		username="TestTest"
+		password="DDDDDDD"
+	/>
+	
+</dataset>

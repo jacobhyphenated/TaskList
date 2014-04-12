@@ -1,0 +1,18 @@
+*.class
+bin/
+build/
+target/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# IDE Files #
+.classpath
+.project
+.settings/
+.metadata/
+
+#Project Specific Files#
+deploy.sh

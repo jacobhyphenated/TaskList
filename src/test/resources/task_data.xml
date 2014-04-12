@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+	<user_entity user_id="100" username="TestA" password="AAAAAAA" />
+	<user_entity user_id="150" username="Test 10" password="BBBBBBB" />
+	
+	<task
+		task_id="11"
+		title="Bills"
+		description="Pay bills all of the time, right here right now"
+		due_date="2014-01-01"
+		task_group="Important"
+		repeatable="MONTHLY"
+		complete_date="2014-02-14"
+		user_id="100"
+	/>
+	
+	<task
+		task_id="12"
+		title="Pick Up Airport"
+		description="Don't forget to pick up the in-laws at the airport"
+		due_date="2014-02-01"
+		task_group="TEMP"
+		repeatable="NONE"
+		complete_date="2014-02-01"
+		user_id="100"
+	/>
+	
+	<task
+		task_id="13"
+		title="New Shoes"
+		description="I should buy new shoes sometime this century"
+		due_date="2099-02-01"
+		task_group="TEMP"
+		repeatable="NONE"
+		user_id="100"
+	/>
+	
+	<task
+		task_id="14"
+		title="Brush Teeth"
+		description="Dental hygene is important"
+		due_date="2013-07-15"
+		task_group="whatevs"
+		repeatable="DAILY"
+		complete_date="2014-03-14"
+		user_id="100"
+	/>
+	
+</dataset>
