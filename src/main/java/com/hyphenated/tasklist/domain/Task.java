@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
@@ -60,7 +59,7 @@ public class Task {
 	private Repeatable repeatable = Repeatable.NONE;
 	
 	@Column(name="complete_date")
-	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS")
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss")
 	private Timestamp completeDate;
 	
 	@JsonIgnore
@@ -95,8 +94,8 @@ public class Task {
 			return null;
 		}
 		
-		LocalDateTime dueTime = LocalDateTime.ofInstant(dueDate.toInstant(), ZoneId.systemDefault());
-		LocalDateTime completeTime = LocalDateTime.ofInstant(completeDate.toInstant(), ZoneId.systemDefault());
+		LocalDateTime dueTime = LocalDateTime.ofInstant(dueDate.toInstant(),  ZoneOffset.ofHours(0));
+		LocalDateTime completeTime = LocalDateTime.ofInstant(completeDate.toInstant(),  ZoneOffset.ofHours(0));
 		
 		//If the due date is after the complete date, use the due date
 		if(dueTime.isAfter(completeTime)){
@@ -106,7 +105,7 @@ public class Task {
 		long diff = repeatable.getTimeUnit().between(dueTime, completeTime);
 		
 		dueTime = dueTime.plus(diff+1, repeatable.getTimeUnit());
-		return dueTime.atZone(ZoneId.systemDefault()).toInstant();
+		return dueTime.atZone( ZoneOffset.ofHours(0)).toInstant();
 	}
 	
 	@JsonProperty("isActive")
@@ -178,7 +177,7 @@ public class Task {
 	/**
 	 * @param dueDate the dueDate to set
 	 */
-	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS")
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss")
 	@JsonProperty("dueDate")
 	public void setDueDate(Timestamp dueDate) {
 		this.dueDate = dueDate;

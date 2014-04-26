@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +36,12 @@ public class ExceptionHandlerController {
 	@ResponseStatus(HttpStatus.FORBIDDEN)
 	public @ResponseBody Map<String,String> badAccessException(UnauthorizedAccessException e){
 		return Collections.singletonMap("error", e.getMessage());
+	}
+	
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	@ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+	public @ResponseBody Map<String,String> badMethodException(HttpRequestMethodNotSupportedException e){
+		return Collections.singletonMap("error", e.getMethod() + " is not supported.");
 	}
 	
 	@ExceptionHandler(Exception.class)
