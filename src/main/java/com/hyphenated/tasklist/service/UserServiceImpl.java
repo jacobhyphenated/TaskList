@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hyphenated.tasklist.dao.UserDao;
 import com.hyphenated.tasklist.domain.UserEntity;
+import com.hyphenated.tasklist.exception.DuplicateUsernameException;
 
 @Service("userDetailsServiceImpl")
 public class UserServiceImpl implements UserDetailsService, UserService {
@@ -42,6 +43,12 @@ public class UserServiceImpl implements UserDetailsService, UserService {
 	@Transactional
 	@Override
 	public UserEntity addUser(String username, String password) {
+		
+		UserEntity user = userDao.getUserByUsername(username);
+		if(user != null){
+			throw new DuplicateUsernameException();
+		}
+		
 		UserEntity newUser = new UserEntity();
 		newUser.setUsername(username);
 		

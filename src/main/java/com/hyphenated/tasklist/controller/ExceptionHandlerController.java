@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import com.hyphenated.tasklist.exception.DuplicateUsernameException;
 import com.hyphenated.tasklist.exception.UnauthorizedAccessException;
 
 @ControllerAdvice
@@ -42,6 +43,12 @@ public class ExceptionHandlerController {
 	@ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
 	public @ResponseBody Map<String,String> badMethodException(HttpRequestMethodNotSupportedException e){
 		return Collections.singletonMap("error", e.getMethod() + " is not supported.");
+	}
+	
+	@ExceptionHandler(DuplicateUsernameException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public @ResponseBody Map<String,String> duplicateUsername(DuplicateUsernameException e){
+		return Collections.singletonMap("error", "Username already exists.");
 	}
 	
 	@ExceptionHandler(Exception.class)
