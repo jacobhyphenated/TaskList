@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.hyphenated.tasklist.dao.TaskDao;
 import com.hyphenated.tasklist.dao.UserDao;
+import com.hyphenated.tasklist.domain.Repeatable;
 import com.hyphenated.tasklist.domain.Task;
 import com.hyphenated.tasklist.domain.UserEntity;
 import com.hyphenated.tasklist.exception.UnauthorizedAccessException;
@@ -61,10 +62,21 @@ public class TaskServiceImpl implements TaskService{
 			throw new UnauthorizedAccessException("You do not have permission to edit this task.");
 		}
 		
-		//Converting LocalDateTime to Timestamp requires specifying 0 time zone offset
-		//Otherwise the local (server) time zone is used, which is undesirable
-		task.setCompleteDate(Timestamp.from(completeTime.atZone(ZoneOffset.ofHours(0)).toInstant()));
-		taskDao.save(task);
+		//TODO: For repeatable tasks, update the due date here. Remove getNextDueDate logic from model
+		//If the completeTime on a repeatable task is before the tasks next due date
+		//then use the next due date instead, so the next due date is moved forwared
+		if(task.getRepeatable() != null && task.getRepeatable() != Repeatable.NONE 
+				&& task.getNextDueDate() != null 
+				&& completeTime.isBefore(LocalDateTime.ofInstant(task.getNextDueDate(), 
+						ZoneOffset.ofHours(0)))){
+			task.setCompleteDate(Timestamp.from(task.getNextDueDate()));
+		}
+		else{
+			//Converting LocalDateTime to Timestamp requires specifying 0 time zone offset
+			//Otherwise the local (server) time zone is used, which is undesirable
+			task.setCompleteDate(Timestamp.from(completeTime.atZone(ZoneOffset.ofHours(0)).toInstant()));
+			taskDao.save(task);			
+		}
 	}
 
 	@Override
