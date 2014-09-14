@@ -28,7 +28,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @Entity
 @Table(name="task")
@@ -48,7 +47,7 @@ public class Task {
 	private String description;
 	
 	@Column(name="due_date")
-	@JsonIgnore
+	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss")
 	private Timestamp dueDate;
 	
 	@Column(name="task_group")
@@ -66,47 +65,6 @@ public class Task {
 	@ManyToOne
 	@JoinColumn(name="user_id")
 	private UserEntity user;
-
-	/**
-	 * Get the next date this task is due.
-	 * <br /><br />
-	 * There is only one due date for non repeated tasks.
-	 * But for repeating tasks, this date reflects the next
-	 * occurrence of the task since the it was last marked completed.
-	 * @return {@link Instant} representing the next due date
-	 */
-	@JsonProperty("dueDate")
-	@JsonSerialize(using=InstantSerializer.class)
-	@Transient
-	public Instant getNextDueDate(){
-		//No due date, no next due date
-		if(dueDate == null){
-			return null;
-		}
-		
-		//No complete date, then we go off of the due date
-		if(completeDate == null){
-			return dueDate.toInstant();
-		}
-		
-		//If the non-repeatable task is complete, return null
-		if(repeatable == null || repeatable == Repeatable.NONE){
-			return null;
-		}
-		
-		LocalDateTime dueTime = LocalDateTime.ofInstant(dueDate.toInstant(),  ZoneOffset.ofHours(0));
-		LocalDateTime completeTime = LocalDateTime.ofInstant(completeDate.toInstant(),  ZoneOffset.ofHours(0));
-		
-		//If the due date is after the complete date, use the due date
-		if(dueTime.isAfter(completeTime)){
-			return dueDate.toInstant();
-		}
-		
-		long diff = repeatable.getTimeUnit().between(dueTime, completeTime);
-		
-		dueTime = dueTime.plus(diff+1, repeatable.getTimeUnit());
-		return dueTime.atZone( ZoneOffset.ofHours(0)).toInstant();
-	}
 	
 	@JsonProperty("isActive")
 	@Transient
@@ -177,8 +135,6 @@ public class Task {
 	/**
 	 * @param dueDate the dueDate to set
 	 */
-	@JsonFormat(pattern="yyyy-MM-dd'T'HH:mm:ss")
-	@JsonProperty("dueDate")
 	public void setDueDate(Timestamp dueDate) {
 		this.dueDate = dueDate;
 	}

@@ -15,4 +15,8 @@ public interface TimeUtils {
 	default public LocalDateTime localDateFromInstant(Instant instant){
 		return LocalDateTime.ofInstant(instant,  ZoneOffset.ofHours(0));
 	}
+	
+	default public LocalDateTime localDateFromTimestamp(Timestamp timestamp){
+		return LocalDateTime.ofInstant(timestamp.toInstant(),  ZoneOffset.ofHours(0));
+	}
 }

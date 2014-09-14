@@ -1,12 +1,14 @@
 package com.hyphenated.tasklist.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.isA;
 import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,6 +79,162 @@ public class TaskServiceTest extends BaseMockitoTest implements TimeUtils {
 		assertEquals(7, tasks.size());
 	}
 	
+	@Test
+	public void testCompleteNextNonRepeatable(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2014-02-01T12:00:00"));
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-02-01T12:00:01"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.FEBRUARY ,nextDate.getMonth());
+		assertEquals(1, nextDate.getDayOfMonth());
+		assertEquals(12, nextDate.getHour());
+		assertEquals(0, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForCompletedNonRepeatable(){
+		Task task = mockedSingleTask();
+		Timestamp dueDate = timeZoneAdjustedDate("2014-02-01T12:00:00");
+		task.setDueDate(dueDate);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-01-01T13:00:00"));
+		
+		assertEquals(dueDate, task.getDueDate());
+	}
+	
+	@Test
+	public void testNextForNoDateNonRepeatable(){
+		Task task = mockedSingleTask();
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-01-01T13:00:00"));
+		assertNull(task.getDueDate());
+	}
+	
+	@Test 
+	public void testNextForNoDateRepeatable(){
+		Task task = mockedSingleTask();
+		task.setRepeatable(Repeatable.WEEKLY);
+		when(taskDao.findById(task.getId())).thenReturn(task);
+	
+		Timestamp completeDate = timeZoneAdjustedDate("2014-01-01T13:00:00");
+		LocalDateTime localCompleteDate =  localDateFromTimestamp(completeDate);
+		taskService.completeTask(task.getId(), localCompleteDate);
+		assertEquals(completeDate, task.getCompleteDate());
+	}
+	
+	@Test
+	public void testNextForRepeatableSameCompletionDate(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2014-03-15T12:31:00"));
+		task.setRepeatable(Repeatable.YEARLY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-03-15T12:31:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2015, nextDate.getYear());
+		assertEquals(Month.MARCH ,nextDate.getMonth());
+		assertEquals(15, nextDate.getDayOfMonth());
+		assertEquals(12, nextDate.getHour());
+		assertEquals(31, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForRepeatableEarlyCompletionDate(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2014-03-15T12:31:00"));
+		task.setRepeatable(Repeatable.DAILY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-02-19T15:59:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.MARCH ,nextDate.getMonth());
+		assertEquals(16, nextDate.getDayOfMonth());
+		assertEquals(12, nextDate.getHour());
+		assertEquals(31, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForRepeatableDay(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2014-03-15T12:31:00"));
+		task.setRepeatable(Repeatable.DAILY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-03-19T15:59:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.MARCH ,nextDate.getMonth());
+		assertEquals(16, nextDate.getDayOfMonth());
+		assertEquals(12, nextDate.getHour());
+		assertEquals(31, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForRepeatableWeek(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2014-02-15T11:31:00"));
+		task.setRepeatable(Repeatable.WEEKLY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-03-19T15:59:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.FEBRUARY ,nextDate.getMonth());
+		assertEquals(22, nextDate.getDayOfMonth());
+		assertEquals(11, nextDate.getHour());
+		assertEquals(31, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForRepeatableMonth(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2013-12-15T11:31:00"));
+		task.setRepeatable(Repeatable.MONTHLY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-03-19T15:59:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.JANUARY ,nextDate.getMonth());
+		assertEquals(15, nextDate.getDayOfMonth());
+		assertEquals(11, nextDate.getHour());
+		assertEquals(31, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
+	@Test
+	public void testNextForRepeatableYear(){
+		Task task = mockedSingleTask();
+		task.setDueDate(timeZoneAdjustedDate("2013-12-15T10:19:00"));
+		task.setRepeatable(Repeatable.YEARLY);
+		
+		when(taskDao.findById(task.getId())).thenReturn(task);
+		taskService.completeTask(task.getId(), LocalDateTime.parse("2014-03-19T15:59:00"));
+		
+		LocalDateTime nextDate = localDateFromTimestamp(task.getDueDate());
+		assertEquals(2014, nextDate.getYear());
+		assertEquals(Month.DECEMBER ,nextDate.getMonth());
+		assertEquals(15, nextDate.getDayOfMonth());
+		assertEquals(10, nextDate.getHour());
+		assertEquals(19, nextDate.getMinute());
+		assertEquals(0, nextDate.getSecond());
+	}
+	
 	private void mockTaskCreation(){
 		when(taskDao.save(isA(Task.class))).thenAnswer(this::mockSameTaskWithId);
 	}
@@ -95,6 +253,21 @@ public class TaskServiceTest extends BaseMockitoTest implements TimeUtils {
 		when(authentication.getPrincipal()).thenReturn(mockUserDetails);
 		when(mockUserDetails.getUsername()).thenReturn("testusername");
 		SecurityContextHolder.setContext(securityContext);
+	}
+	
+	private Task mockedSingleTask(){
+		UserEntity user = new UserEntity();
+		user.setUsername("testusername");
+		user.setPassword("testpassword");
+		user.setId(10l);
+		
+		Task t = new Task();
+		t.setId(100l);
+		t.setTitle("Task1");
+		t.setDescription("Task1 Description");
+		t.setGroup("Group1");
+		t.setUser(user);
+		return t;
 	}
 	
 	private UserEntity mockedUserTasks(){

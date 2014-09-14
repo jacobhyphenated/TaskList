@@ -1,6 +1,7 @@
 package com.hyphenated.tasklist.service;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -62,21 +63,23 @@ public class TaskServiceImpl implements TaskService{
 			throw new UnauthorizedAccessException("You do not have permission to edit this task.");
 		}
 		
-		//TODO: For repeatable tasks, update the due date here. Remove getNextDueDate logic from model
-		//If the completeTime on a repeatable task is before the tasks next due date
-		//then use the next due date instead, so the next due date is moved forwared
-		if(task.getRepeatable() != null && task.getRepeatable() != Repeatable.NONE 
-				&& task.getNextDueDate() != null 
-				&& completeTime.isBefore(LocalDateTime.ofInstant(task.getNextDueDate(), 
+		task.setCompleteDate(Timestamp.from(completeTime.atZone(ZoneOffset.ofHours(0)).toInstant()));
+		if(task.getRepeatable() != null && task.getRepeatable() != Repeatable.NONE ){
+			Instant nextDueDate = getNextDueDate(task);
+			if(nextDueDate != null){
+				Timestamp nextDueTimestamp = Timestamp.from(nextDueDate);
+				//If the completeTime on a repeatable task is before the tasks next due date
+				//then use the next due date instead, so the next due date is moved forward
+				if(nextDueDate != null && completeTime.isBefore(LocalDateTime.ofInstant(nextDueDate, 
 						ZoneOffset.ofHours(0)))){
-			task.setCompleteDate(Timestamp.from(task.getNextDueDate()));
+					task.setCompleteDate(nextDueTimestamp);
+					nextDueDate = getNextDueDate(task);
+					nextDueTimestamp = Timestamp.from(nextDueDate);
+				}
+				task.setDueDate(nextDueTimestamp);
+			}
 		}
-		else{
-			//Converting LocalDateTime to Timestamp requires specifying 0 time zone offset
-			//Otherwise the local (server) time zone is used, which is undesirable
-			task.setCompleteDate(Timestamp.from(completeTime.atZone(ZoneOffset.ofHours(0)).toInstant()));
-			taskDao.save(task);			
-		}
+		taskDao.save(task);			
 	}
 
 	@Override
@@ -106,5 +109,39 @@ public class TaskServiceImpl implements TaskService{
 		}
 		task.setUser(user);
 		taskDao.merge(task);
+	}
+	
+	private Instant getNextDueDate(Task task){
+		//No due date
+		if(task.getDueDate() == null){
+			//Use completion date
+			if(task.getCompleteDate() != null){
+				return task.getCompleteDate().toInstant();
+			}
+			//otherwise, nothing
+			else{
+				return null;
+			}
+		}
+		
+		//No complete date, then we go off of the due date
+		if(task.getCompleteDate() == null){
+			return task.getDueDate().toInstant();
+		}
+		
+		//If the non-repeatable task is complete, return null
+		if(task.getRepeatable() == null || task.getRepeatable() == Repeatable.NONE){
+			return null;
+		}
+		
+		LocalDateTime dueTime = LocalDateTime.ofInstant(
+				task.getDueDate().toInstant(),  ZoneOffset.ofHours(0));
+//		LocalDateTime completeTime = LocalDateTime.ofInstant(
+//				task.getCompleteDate().toInstant(),  ZoneOffset.ofHours(0));
+//		
+		//long diff = task.getRepeatable().getTimeUnit().between(dueTime, completeTime);
+		
+		dueTime = dueTime.plus(1, task.getRepeatable().getTimeUnit());
+		return dueTime.atZone( ZoneOffset.ofHours(0)).toInstant();
 	}
 }
