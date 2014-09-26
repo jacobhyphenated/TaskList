@@ -10,7 +10,7 @@
 	<!-- 
     <security:global-method-security secured-annotations="enabled" />
      -->
-    <security:http create-session="stateless">
+    <security:http create-session="stateless" realm="Task List">
         <!-- Restrict URLs based on role -->
         <security:intercept-url pattern="/user/create" access="IS_AUTHENTICATED_ANONYMOUSLY" />
         <security:intercept-url pattern="/**" access="ROLE_USER" />
